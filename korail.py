@@ -144,7 +144,10 @@ def main():
         except NoResultsError:
             log("검색 결과 없음")
             return
-        log(f"검색 결과 {len(trains)}건:")
+        if args.time_end:
+            trains = [t for t in trains if t.dep_time <= args.time_end]
+        log(f"검색 결과 {len(trains)}건"
+            f"{' (' + args.time + '~' + args.time_end + ' 범위)' if args.time_end else ''}:")
         for t in trains:
             print(f"  {t.train_no:>4}  {t.dep_time[:2]}:{t.dep_time[2:4]}"
                   f"~{t.arr_time[:2]}:{t.arr_time[2:4]}  "
