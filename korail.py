@@ -93,13 +93,12 @@ def build_passengers(adults, children, seniors):
 
 
 def filter_candidates(trains, args, reserve_option, train_no_filter):
-    """반환: (예약가능 후보, 윈도우 내 개수, 윈도우 외 개수)."""
+    """반환: (예약가능 후보, 시간대 내 열차 전체)."""
     in_window = trains
     if args.time_end:
         in_window = [t for t in in_window if t.dep_time <= args.time_end]
     if train_no_filter:
         in_window = [t for t in in_window if t.train_no in train_no_filter]
-    out_of_window = len(trains) - len(in_window)
 
     def usable(t):
         if reserve_option == ReserveOption.GENERAL_ONLY:
@@ -112,7 +111,17 @@ def filter_candidates(trains, args, reserve_option, train_no_filter):
             ok = t.has_general_waiting_list()
         return ok
 
-    return [t for t in in_window if usable(t)], len(in_window), out_of_window
+    return [t for t in in_window if usable(t)], in_window
+
+
+def format_train_status(t):
+    seat = (f"일반={'O' if t.has_general_seat() else '-'}"
+            f"/특실={'O' if t.has_special_seat() else '-'}"
+            f"/대기={'O' if t.has_general_waiting_list() else '-'}")
+    status = "발매중" if t.has_seat() else (
+        "대기가능" if t.has_general_waiting_list() else "매진")
+    return (f"  {t.train_no:>5}  {t.dep_time[:2]}:{t.dep_time[2:4]}"
+            f"~{t.arr_time[:2]}:{t.arr_time[2:4]}  {seat}  {status}")
 
 
 def main():
@@ -149,15 +158,9 @@ def main():
         if args.time_end:
             trains = [t for t in trains if t.dep_time <= args.time_end]
         log(f"검색 결과 {len(trains)}건"
-            f"{' (' + args.time + '~' + args.time_end + ' 범위)' if args.time_end else ''}:")
+            f"{' (' + args.time + '~' + args.time_end + ')' if args.time_end else ''}:")
         for t in trains:
-            print(f"  {t.train_no:>4}  {t.dep_time[:2]}:{t.dep_time[2:4]}"
-                  f"~{t.arr_time[:2]}:{t.arr_time[2:4]}  "
-                  f"{t.dep_name}→{t.arr_name}  "
-                  f"일반={'O' if t.has_general_seat() else '-'}"
-                  f"/특실={'O' if t.has_special_seat() else '-'}"
-                  f"/대기={'O' if t.has_general_waiting_list() else '-'}  "
-                  f"{t.train_type_name}", flush=True)
+            print(format_train_status(t), flush=True)
         return
 
     attempt = 0
@@ -171,14 +174,14 @@ def main():
             trains = k.search_train_allday(
                 args.dep, args.arr, args.date, args.time,
                 train_type=train_type, passengers=psgrs,
-                include_no_seats=args.try_waiting,
+                include_no_seats=True,
             )
         except NeedToLoginError:
             log("세션 만료 → 재로그인")
             k.login()
             continue
         except NoResultsError:
-            log(f"#{attempt} 좌석 없음")
+            log(f"#{attempt} 해당 시간대 열차 없음")
             time.sleep(args.interval)
             continue
         except KorailError as e:
@@ -190,17 +193,22 @@ def main():
             time.sleep(args.interval)
             continue
 
-        candidates, in_window, _ = filter_candidates(
+        candidates, in_window = filter_candidates(
             trains, args, reserve_option, train_no_filter)
-        if not candidates:
-            if in_window == 0:
-                log(f"#{attempt} 해당 시간대 열차 없음")
-            else:
-                log(f"#{attempt} {in_window}건 모두 매진")
+
+        if not in_window:
+            log(f"#{attempt} 해당 시간대 열차 없음")
             time.sleep(args.interval)
             continue
 
-        log(f"#{attempt} 후보 {len(candidates)}개 → 예약 시도")
+        log(f"#{attempt} {len(in_window)}건 검색됨"
+            f"{' → 후보 ' + str(len(candidates)) + '개' if candidates else ' (모두 매진)'}")
+        for t in in_window:
+            print(format_train_status(t), flush=True)
+
+        if not candidates:
+            time.sleep(args.interval)
+            continue
         booked = False
         for t in candidates:
             try:
