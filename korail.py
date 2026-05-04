@@ -56,9 +56,9 @@ def parse_args():
                    help="코레일 ID (기본: KORAIL_ID 환경변수)")
     p.add_argument("--pw", default=os.environ.get("KORAIL_PW"),
                    help="코레일 PW (기본: KORAIL_PW 환경변수)")
-    p.add_argument("--dep", required=True, help="출발역 (예: 서울)")
-    p.add_argument("--arr", required=True, help="도착역 (예: 부산)")
-    p.add_argument("--date", required=True, help="출발일 yyyyMMdd")
+    p.add_argument("--dep", help="출발역 (예: 서울)")
+    p.add_argument("--arr", help="도착역 (예: 부산)")
+    p.add_argument("--date", help="출발일 yyyyMMdd")
     p.add_argument("--time", default="000000", help="출발 시각 hhmmss (기본: 000000)")
     p.add_argument("--time-end", default=None,
                    help="검색 종료 시각 hhmmss (지정 시 이 시각 이후 출발 열차는 제외)")
@@ -78,6 +78,8 @@ def parse_args():
                    help="0이면 무한 반복")
     p.add_argument("--list-only", action="store_true",
                    help="예약 시도 없이 검색된 열차 목록만 출력하고 종료")
+    p.add_argument("--login-test", action="store_true",
+                   help="로그인만 시도하고 종료 (성공 시 exit 0, 실패 시 exit 1)")
     return p.parse_args()
 
 
@@ -132,16 +134,22 @@ def main():
     if not args.id or not args.pw:
         sys.exit("KORAIL_ID/KORAIL_PW 환경변수 또는 --id/--pw 인자가 필요합니다.")
 
-    psgrs = build_passengers(args.adults, args.children, args.seniors)
-    train_type = TRAIN_TYPES[args.train_type]
-    reserve_option = RESERVE_OPTIONS[args.reserve_option]
-    train_no_filter = set(args.train_no) if args.train_no else None
-
     log(f"로그인 시도: {args.id}")
     k = Korail(args.id, args.pw, auto_login=False)
     if not k.login():
         sys.exit("로그인 실패")
     log(f"로그인 성공: {k.name}")
+
+    if args.login_test:
+        return
+
+    if not (args.dep and args.arr and args.date):
+        sys.exit("--dep, --arr, --date는 필수입니다.")
+
+    psgrs = build_passengers(args.adults, args.children, args.seniors)
+    train_type = TRAIN_TYPES[args.train_type]
+    reserve_option = RESERVE_OPTIONS[args.reserve_option]
+    train_no_filter = set(args.train_no) if args.train_no else None
     log(f"조건: {args.dep}→{args.arr} {args.date} {args.time}"
         f"{'~' + args.time_end if args.time_end else ''} "
         f"승객={args.adults}성인+{args.children}아동+{args.seniors}경로 "

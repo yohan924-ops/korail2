@@ -28,7 +28,7 @@ echo     [Q]     종료
 set /p RELOGIN=     선택:
 if /i "!RELOGIN!"=="q" goto END
 if /i "!RELOGIN!"=="n" goto STEP1_RESET
-goto STEP2
+goto STEP1_VERIFY
 
 :STEP1_RESET
 attrib -h korail.config 2>nul
@@ -50,13 +50,30 @@ echo     [Q]     종료
 set /p CONFIRM1=     선택:
 if /i "!CONFIRM1!"=="q" goto END
 if /i "!CONFIRM1!"=="b" goto STEP1_RESET
-> korail.config (
-    echo KORAIL_ID=!KORAIL_ID!
-    echo KORAIL_PW=!KORAIL_PW!
-)
-attrib +h korail.config
+
+:STEP1_VERIFY
 echo.
-echo   [O] 계정 정보 저장 완료.
+echo   --- 로그인 확인 중... ---
+echo.
+python korail.py --id "!KORAIL_ID!" --pw "!KORAIL_PW!" --login-test
+if errorlevel 1 (
+    echo.
+    echo   [X] 로그인 실패. ID/PW를 다시 입력하세요.
+    echo.
+    pause
+    goto STEP1_RESET
+)
+if not exist korail.config (
+    > korail.config (
+        echo KORAIL_ID=!KORAIL_ID!
+        echo KORAIL_PW=!KORAIL_PW!
+    )
+    attrib +h korail.config
+    echo.
+    echo   [O] 계정 정보 저장 완료.
+)
+echo.
+echo   [O] 로그인 성공! 다음 단계로 이동합니다.
 echo.
 pause
 
