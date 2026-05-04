@@ -190,15 +190,13 @@ def main():
             time.sleep(args.interval)
             continue
 
-        candidates, in_window, out_of_window = filter_candidates(
+        candidates, in_window, _ = filter_candidates(
             trains, args, reserve_option, train_no_filter)
         if not candidates:
             if in_window == 0:
-                log(f"#{attempt} 윈도우 내 빈자리 없음"
-                    f" (윈도우 밖 {out_of_window}건은 발매중)")
+                log(f"#{attempt} 해당 시간대 열차 없음")
             else:
-                log(f"#{attempt} 윈도우 내 {in_window}건 모두 매진/대기없음"
-                    f" (윈도우 밖 {out_of_window}건 발매중)")
+                log(f"#{attempt} {in_window}건 모두 매진")
             time.sleep(args.interval)
             continue
 
