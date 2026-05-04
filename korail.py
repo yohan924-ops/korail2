@@ -76,6 +76,8 @@ def parse_args():
                    help="조회 간격(초). 너무 짧으면 차단될 수 있음")
     p.add_argument("--max-attempts", type=int, default=0,
                    help="0이면 무한 반복")
+    p.add_argument("--list-only", action="store_true",
+                   help="예약 시도 없이 검색된 열차 목록만 출력하고 종료")
     return p.parse_args()
 
 
@@ -131,6 +133,27 @@ def main():
         f"승객={args.adults}성인+{args.children}아동+{args.seniors}경로 "
         f"열차={args.train_type} 옵션={args.reserve_option} "
         f"대기={'on' if args.try_waiting else 'off'} 간격={args.interval}s")
+
+    if args.list_only:
+        try:
+            trains = k.search_train_allday(
+                args.dep, args.arr, args.date, args.time,
+                train_type=train_type, passengers=psgrs,
+                include_no_seats=True,
+            )
+        except NoResultsError:
+            log("검색 결과 없음")
+            return
+        log(f"검색 결과 {len(trains)}건:")
+        for t in trains:
+            print(f"  {t.train_no:>4}  {t.dep_time[:2]}:{t.dep_time[2:4]}"
+                  f"~{t.arr_time[:2]}:{t.arr_time[2:4]}  "
+                  f"{t.dep_name}→{t.arr_name}  "
+                  f"일반={'O' if t.has_general_seat() else '-'}"
+                  f"/특실={'O' if t.has_special_seat() else '-'}"
+                  f"/대기={'O' if t.has_general_waiting_list() else '-'}  "
+                  f"{t.train_type_name}", flush=True)
+        return
 
     attempt = 0
     while True:
