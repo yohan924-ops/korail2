@@ -120,8 +120,11 @@ def format_train_status(t):
             f"/대기={'O' if t.has_general_waiting_list() else '-'}")
     status = "발매중" if t.has_seat() else (
         "대기가능" if t.has_general_waiting_list() else "매진")
-    return (f"  {t.train_no:>5}  {t.dep_time[:2]}:{t.dep_time[2:4]}"
-            f"~{t.arr_time[:2]}:{t.arr_time[2:4]}  {seat}  {status}")
+    dep = f"{t.dep_time[:2]}:{t.dep_time[2:4]}"
+    arr = f"{t.arr_time[:2]}:{t.arr_time[2:4]}"
+    return (f"  [{t.train_type_name}] {t.train_no}호  "
+            f"{t.dep_name}({dep}) → {t.arr_name}({arr})  "
+            f"{seat}  {status}")
 
 
 def main():
