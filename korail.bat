@@ -104,6 +104,7 @@ if "!TIME_!"=="" set TIME_=000000
 set /p TIME_END=     종료 시각 ^(HHMMSS, 비우면 종일^):
 
 echo.
+:STEP2_TT
 echo   열차 종류:
 echo     1) KTX (KTX-산천 포함^)
 echo     2) ALL (모든 종류^)
@@ -111,10 +112,15 @@ echo     3) ITX-새마을
 echo     4) 무궁화호
 set /p TT_CHOICE=     선택 [1]:
 if "!TT_CHOICE!"=="" set TT_CHOICE=1
+set "TRAIN_TYPE="
 if "!TT_CHOICE!"=="1" set TRAIN_TYPE=KTX
 if "!TT_CHOICE!"=="2" set TRAIN_TYPE=ALL
 if "!TT_CHOICE!"=="3" set TRAIN_TYPE=ITX_SAEMAEUL
 if "!TT_CHOICE!"=="4" set TRAIN_TYPE=MUGUNGHWA
+if not defined TRAIN_TYPE (
+    echo   [!] 1~4 중에서 선택하세요.
+    goto STEP2_TT
+)
 
 echo.
 echo   --- 검색 중... ---
@@ -152,6 +158,7 @@ echo.
 echo   검색 결과에서 어떤 차를 어떤 좌석으로 잡을지 정합니다.
 echo.
 
+:STEP3_RO
 echo   좌석 등급:
 echo     1) 일반실 우선 ^(없으면 특실^)
 echo     2) 일반실만
@@ -159,10 +166,15 @@ echo     3) 특실 우선   ^(없으면 일반실^)
 echo     4) 특실만
 set /p RO_CHOICE=     선택 [1]:
 if "!RO_CHOICE!"=="" set RO_CHOICE=1
+set "RESERVE_OPTION="
 if "!RO_CHOICE!"=="1" set RESERVE_OPTION=GENERAL_FIRST
 if "!RO_CHOICE!"=="2" set RESERVE_OPTION=GENERAL_ONLY
 if "!RO_CHOICE!"=="3" set RESERVE_OPTION=SPECIAL_FIRST
 if "!RO_CHOICE!"=="4" set RESERVE_OPTION=SPECIAL_ONLY
+if not defined RESERVE_OPTION (
+    echo   [!] 1~4 중에서 선택하세요.
+    goto STEP3_RO
+)
 
 echo.
 echo   인원:
