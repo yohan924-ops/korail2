@@ -1,31 +1,31 @@
-ï»¿@echo off
-chcp 65001 >nul
+@echo off
+chcp 949 >nul
 setlocal enabledelayedexpansion
-title ì½”ë ˆì¼ ìžë™ ì˜ˆë§¤ ë§¤í¬ë¡œ
+title ÄÚ·¹ÀÏ ÀÚµ¿ ¿¹¸Å ¸ÅÅ©·Î
 cd /d "%~dp0"
 
 
 REM ============================================================
-REM   1ë‹¨ê³„: ë¡œê·¸ì¸
+REM   1´Ü°è: ·Î±×ÀÎ
 REM ============================================================
 :STEP1
 cls
 echo.
 echo  ============================================
-echo             [ 1 / 4 ]   ë¡œê·¸ì¸
+echo             [ 1 / 4 ]   ·Î±×ÀÎ
 echo  ============================================
 echo.
 
 if not exist korail.config goto STEP1_NEW
 
 for /f "usebackq tokens=1,* delims==" %%a in ("korail.config") do set "%%a=%%b"
-echo   ì €ìž¥ëœ ê³„ì •ìœ¼ë¡œ ë¡œê·¸ì¸í•©ë‹ˆë‹¤.
+echo   ÀúÀåµÈ °èÁ¤À¸·Î ·Î±×ÀÎÇÕ´Ï´Ù.
 echo     ID : !KORAIL_ID!
 echo.
-echo     [Enter] ê·¸ëŒ€ë¡œ ì§„í–‰
-echo     [N]     ê³„ì • ë³€ê²½
-echo     [Q]     ì¢…ë£Œ
-set /p RELOGIN=     ì„ íƒ:
+echo     [Enter] ±×´ë·Î ÁøÇà
+echo     [N]     °èÁ¤ º¯°æ
+echo     [Q]     Á¾·á
+set /p RELOGIN=     ¼±ÅÃ:
 if /i "!RELOGIN!"=="q" goto END
 if /i "!RELOGIN!"=="n" goto STEP1_RESET
 goto STEP1_VERIFY
@@ -38,22 +38,22 @@ set "KORAIL_PW="
 goto STEP1
 
 :STEP1_NEW
-echo   ì²˜ìŒ ì‹¤í–‰ìž…ë‹ˆë‹¤. ì½”ë ˆì¼ ê³„ì •ì„ ìž…ë ¥í•˜ì„¸ìš”.
-echo   ^(ì´ í´ë”ì˜ korail.configì— ì €ìž¥ë©ë‹ˆë‹¤^)
+echo   Ã³À½ ½ÇÇàÀÔ´Ï´Ù. ÄÚ·¹ÀÏ °èÁ¤À» ÀÔ·ÂÇÏ¼¼¿ä.
+echo   ^(ÀÌ Æú´õÀÇ korail.config¿¡ ÀúÀåµË´Ï´Ù^)
 echo.
-set /p KORAIL_ID=     ID  ^(íšŒì›ë²ˆí˜¸/ì´ë©”ì¼/010-XXXX-XXXX^):
-set /p KORAIL_PW=     ë¹„ë°€ë²ˆí˜¸:
+set /p KORAIL_ID=     ID  ^(È¸¿ø¹øÈ£/ÀÌ¸ÞÀÏ/010-XXXX-XXXX^):
+set /p KORAIL_PW=     ºñ¹Ð¹øÈ£:
 echo.
-echo     [Enter] ì´ ì •ë³´ë¡œ ì§„í–‰
-echo     [B]     ë‹¤ì‹œ ìž…ë ¥
-echo     [Q]     ì¢…ë£Œ
-set /p CONFIRM1=     ì„ íƒ:
+echo     [Enter] ÀÌ Á¤º¸·Î ÁøÇà
+echo     [B]     ´Ù½Ã ÀÔ·Â
+echo     [Q]     Á¾·á
+set /p CONFIRM1=     ¼±ÅÃ:
 if /i "!CONFIRM1!"=="q" goto END
 if /i "!CONFIRM1!"=="b" goto STEP1_RESET
 
 :STEP1_VERIFY
 echo.
-echo   --- ë¡œê·¸ì¸ í™•ì¸ ì¤‘... ---
+echo   --- ·Î±×ÀÎ È®ÀÎ Áß... ---
 echo.
 python korail.py --id "!KORAIL_ID!" --pw "!KORAIL_PW!" --login-test
 if errorlevel 1 goto STEP1_FAIL
@@ -61,7 +61,7 @@ goto STEP1_SAVE
 
 :STEP1_FAIL
 echo.
-echo   [X] ë¡œê·¸ì¸ ì‹¤íŒ¨. ID/PWë¥¼ ë‹¤ì‹œ ìž…ë ¥í•˜ì„¸ìš”.
+echo   [X] ·Î±×ÀÎ ½ÇÆÐ. ID/PW¸¦ ´Ù½Ã ÀÔ·ÂÇÏ¼¼¿ä.
 echo.
 pause
 goto STEP1_RESET
@@ -74,43 +74,43 @@ if exist korail.config goto STEP1_DONE
 )
 attrib +h korail.config
 echo.
-echo   [O] ê³„ì • ì •ë³´ ì €ìž¥ ì™„ë£Œ.
+echo   [O] °èÁ¤ Á¤º¸ ÀúÀå ¿Ï·á.
 
 :STEP1_DONE
 echo.
-echo   [O] ë¡œê·¸ì¸ ì„±ê³µ! ë‹¤ìŒ ë‹¨ê³„ë¡œ ì´ë™í•©ë‹ˆë‹¤.
+echo   [O] ·Î±×ÀÎ ¼º°ø! ´ÙÀ½ ´Ü°è·Î ÀÌµ¿ÇÕ´Ï´Ù.
 echo.
 pause
 
 
 REM ============================================================
-REM   2ë‹¨ê³„: ê¸°ì°¨ ê²€ìƒ‰
+REM   2´Ü°è: ±âÂ÷ °Ë»ö
 REM ============================================================
 :STEP2
 cls
 echo.
 echo  ============================================
-echo             [ 2 / 4 ]   ê¸°ì°¨ ê²€ìƒ‰
+echo             [ 2 / 4 ]   ±âÂ÷ °Ë»ö
 echo  ============================================
 echo.
-echo   ì›í•˜ëŠ” ì‹œê°„ëŒ€ì— ì–´ë–¤ ì—´ì°¨ê°€ ìš´í–‰í•˜ëŠ”ì§€ í™•ì¸í•©ë‹ˆë‹¤.
+echo   ¿øÇÏ´Â ½Ã°£´ë¿¡ ¾î¶² ¿­Â÷°¡ ¿îÇàÇÏ´ÂÁö È®ÀÎÇÕ´Ï´Ù.
 echo.
 
-set /p DEP=     ì¶œë°œì—­  ^(ì˜ˆ: ì„œìš¸^):
-set /p ARR=     ë„ì°©ì—­  ^(ì˜ˆ: ë¶€ì‚°^):
-set /p DATE_=     ì¶œë°œì¼  ^(YYYYMMDD^):
-set /p TIME_=     ì‹œìž‘ ì‹œê° ^(HHMMSS, ë¹„ìš°ë©´ 000000^):
+set /p DEP=     Ãâ¹ß¿ª  ^(¿¹: ¼­¿ï^):
+set /p ARR=     µµÂø¿ª  ^(¿¹: ºÎ»ê^):
+set /p DATE_=     Ãâ¹ßÀÏ  ^(YYYYMMDD^):
+set /p TIME_=     ½ÃÀÛ ½Ã°¢ ^(HHMMSS, ºñ¿ì¸é 000000^):
 if "!TIME_!"=="" set TIME_=000000
-set /p TIME_END=     ì¢…ë£Œ ì‹œê° ^(HHMMSS, ë¹„ìš°ë©´ ì¢…ì¼^):
+set /p TIME_END=     Á¾·á ½Ã°¢ ^(HHMMSS, ºñ¿ì¸é Á¾ÀÏ^):
 
 echo.
 :STEP2_TT
-echo   ì—´ì°¨ ì¢…ë¥˜:
-echo     1) KTX (KTX-ì‚°ì²œ í¬í•¨^)
-echo     2) ALL (ëª¨ë“  ì¢…ë¥˜^)
-echo     3) ITX-ìƒˆë§ˆì„
-echo     4) ë¬´ê¶í™”í˜¸
-set /p TT_CHOICE=     ì„ íƒ [1]:
+echo   ¿­Â÷ Á¾·ù:
+echo     1) KTX (KTX-»êÃµ Æ÷ÇÔ^)
+echo     2) ALL (¸ðµç Á¾·ù^)
+echo     3) ITX-»õ¸¶À»
+echo     4) ¹«±ÃÈ­È£
+set /p TT_CHOICE=     ¼±ÅÃ [1]:
 if "!TT_CHOICE!"=="" set TT_CHOICE=1
 set "TRAIN_TYPE="
 if "!TT_CHOICE!"=="1" set TRAIN_TYPE=KTX
@@ -118,12 +118,12 @@ if "!TT_CHOICE!"=="2" set TRAIN_TYPE=ALL
 if "!TT_CHOICE!"=="3" set TRAIN_TYPE=ITX_SAEMAEUL
 if "!TT_CHOICE!"=="4" set TRAIN_TYPE=MUGUNGHWA
 if not defined TRAIN_TYPE (
-    echo   [!] 1~4 ì¤‘ì—ì„œ ì„ íƒí•˜ì„¸ìš”.
+    echo   [!] 1~4 Áß¿¡¼­ ¼±ÅÃÇÏ¼¼¿ä.
     goto STEP2_TT
 )
 
 echo.
-echo   --- ê²€ìƒ‰ ì¤‘... ---
+echo   --- °Ë»ö Áß... ---
 echo.
 
 set SEARCH_ARGS=--id "!KORAIL_ID!" --pw "!KORAIL_PW!" --dep !DEP! --arr !ARR! --date !DATE_! --time !TIME_! --train-type !TRAIN_TYPE! --list-only
@@ -133,12 +133,12 @@ python korail.py !SEARCH_ARGS!
 
 echo.
 echo  --------------------------------------------
-echo     [Y/Enter] ì˜ˆë§¤ ì¡°ê±´ ì„¤ì •ìœ¼ë¡œ
-echo     [R]       ê²€ìƒ‰ ì¡°ê±´ ë‹¤ì‹œ ìž…ë ¥
-echo     [B]       ì´ì „ ë‹¨ê³„ ^(ë¡œê·¸ì¸^)ìœ¼ë¡œ
-echo     [Q]       ì¢…ë£Œ
+echo     [Y/Enter] ¿¹¸Å Á¶°Ç ¼³Á¤À¸·Î
+echo     [R]       °Ë»ö Á¶°Ç ´Ù½Ã ÀÔ·Â
+echo     [B]       ÀÌÀü ´Ü°è ^(·Î±×ÀÎ^)À¸·Î
+echo     [Q]       Á¾·á
 echo  --------------------------------------------
-set /p NEXT=     ì„ íƒ:
+set /p NEXT=     ¼±ÅÃ:
 if "!NEXT!"=="" set NEXT=y
 if /i "!NEXT!"=="q" goto END
 if /i "!NEXT!"=="b" goto STEP1
@@ -146,25 +146,25 @@ if /i "!NEXT!"=="r" goto STEP2
 
 
 REM ============================================================
-REM   3ë‹¨ê³„: ìžë™ ì˜ˆë§¤ ì¡°ê±´ ì„ íƒ
+REM   3´Ü°è: ÀÚµ¿ ¿¹¸Å Á¶°Ç ¼±ÅÃ
 REM ============================================================
 :STEP3
 cls
 echo.
 echo  ============================================
-echo             [ 3 / 4 ]   ì˜ˆë§¤ ì¡°ê±´ ì„ íƒ
+echo             [ 3 / 4 ]   ¿¹¸Å Á¶°Ç ¼±ÅÃ
 echo  ============================================
 echo.
-echo   ê²€ìƒ‰ ê²°ê³¼ì—ì„œ ì–´ë–¤ ì°¨ë¥¼ ì–´ë–¤ ì¢Œì„ìœ¼ë¡œ ìž¡ì„ì§€ ì •í•©ë‹ˆë‹¤.
+echo   °Ë»ö °á°ú¿¡¼­ ¾î¶² Â÷¸¦ ¾î¶² ÁÂ¼®À¸·Î ÀâÀ»Áö Á¤ÇÕ´Ï´Ù.
 echo.
 
 :STEP3_RO
-echo   ì¢Œì„ ë“±ê¸‰:
-echo     1) ì¼ë°˜ì‹¤ ìš°ì„  ^(ì—†ìœ¼ë©´ íŠ¹ì‹¤^)
-echo     2) ì¼ë°˜ì‹¤ë§Œ
-echo     3) íŠ¹ì‹¤ ìš°ì„    ^(ì—†ìœ¼ë©´ ì¼ë°˜ì‹¤^)
-echo     4) íŠ¹ì‹¤ë§Œ
-set /p RO_CHOICE=     ì„ íƒ [1]:
+echo   ÁÂ¼® µî±Þ:
+echo     1) ÀÏ¹Ý½Ç ¿ì¼± ^(¾øÀ¸¸é Æ¯½Ç^)
+echo     2) ÀÏ¹Ý½Ç¸¸
+echo     3) Æ¯½Ç ¿ì¼±   ^(¾øÀ¸¸é ÀÏ¹Ý½Ç^)
+echo     4) Æ¯½Ç¸¸
+set /p RO_CHOICE=     ¼±ÅÃ [1]:
 if "!RO_CHOICE!"=="" set RO_CHOICE=1
 set "RESERVE_OPTION="
 if "!RO_CHOICE!"=="1" set RESERVE_OPTION=GENERAL_FIRST
@@ -172,37 +172,37 @@ if "!RO_CHOICE!"=="2" set RESERVE_OPTION=GENERAL_ONLY
 if "!RO_CHOICE!"=="3" set RESERVE_OPTION=SPECIAL_FIRST
 if "!RO_CHOICE!"=="4" set RESERVE_OPTION=SPECIAL_ONLY
 if not defined RESERVE_OPTION (
-    echo   [!] 1~4 ì¤‘ì—ì„œ ì„ íƒí•˜ì„¸ìš”.
+    echo   [!] 1~4 Áß¿¡¼­ ¼±ÅÃÇÏ¼¼¿ä.
     goto STEP3_RO
 )
 
 echo.
-echo   ì¸ì›:
-set /p ADULTS=     ì–´ë¥¸   [1]:
+echo   ÀÎ¿ø:
+set /p ADULTS=     ¾î¸¥   [1]:
 if "!ADULTS!"=="" set ADULTS=1
-set /p CHILDREN=     ì–´ë¦°ì´ [0]:
+set /p CHILDREN=     ¾î¸°ÀÌ [0]:
 if "!CHILDREN!"=="" set CHILDREN=0
-set /p SENIORS=     ê²½ë¡œ   [0]:
+set /p SENIORS=     °æ·Î   [0]:
 if "!SENIORS!"=="" set SENIORS=0
 
 echo.
-set /p YN_WAIT=     ë§¤ì§„ ì‹œ ì˜ˆì•½ëŒ€ê¸°ê¹Œì§€ ì‹œë„? ^(y/n^) [y]:
+set /p YN_WAIT=     ¸ÅÁø ½Ã ¿¹¾à´ë±â±îÁö ½Ãµµ? ^(y/n^) [y]:
 if "!YN_WAIT!"=="" set YN_WAIT=y
 set TRY_WAITING=
 if /i "!YN_WAIT!"=="y" set TRY_WAITING=--try-waiting
 
 echo.
-set /p INTERVAL=     ì¡°íšŒ ê°„ê²©(ì´ˆ^) [3]:
+set /p INTERVAL=     Á¶È¸ °£°Ý(ÃÊ^) [3]:
 if "!INTERVAL!"=="" set INTERVAL=3
 
 echo.
 echo  --------------------------------------------
-echo     [Y/Enter] ë‹¤ìŒ ^(ì˜ˆë§¤ ì‹œìž‘ í™”ë©´^)ìœ¼ë¡œ
-echo     [B]       ì´ì „ ë‹¨ê³„ ^(ê¸°ì°¨ ê²€ìƒ‰^)ìœ¼ë¡œ
-echo     [R]       ì´ ë‹¨ê³„ ë‹¤ì‹œ ìž…ë ¥
-echo     [Q]       ì¢…ë£Œ
+echo     [Y/Enter] ´ÙÀ½ ^(¿¹¸Å ½ÃÀÛ È­¸é^)À¸·Î
+echo     [B]       ÀÌÀü ´Ü°è ^(±âÂ÷ °Ë»ö^)À¸·Î
+echo     [R]       ÀÌ ´Ü°è ´Ù½Ã ÀÔ·Â
+echo     [Q]       Á¾·á
 echo  --------------------------------------------
-set /p NEXT3=     ì„ íƒ:
+set /p NEXT3=     ¼±ÅÃ:
 if "!NEXT3!"=="" set NEXT3=y
 if /i "!NEXT3!"=="q" goto END
 if /i "!NEXT3!"=="b" goto STEP2
@@ -210,36 +210,36 @@ if /i "!NEXT3!"=="r" goto STEP3
 
 
 REM ============================================================
-REM   4ë‹¨ê³„: ì˜ˆë§¤ ì‹œìž‘
+REM   4´Ü°è: ¿¹¸Å ½ÃÀÛ
 REM ============================================================
 :STEP4
 cls
 echo.
 echo  ============================================
-echo             [ 4 / 4 ]   ì˜ˆë§¤ ì‹œìž‘
+echo             [ 4 / 4 ]   ¿¹¸Å ½ÃÀÛ
 echo  ============================================
 echo.
-echo   ì•„ëž˜ ì¡°ê±´ìœ¼ë¡œ ìžë™ ì˜ˆë§¤ë¥¼ ì‹œìž‘í•©ë‹ˆë‹¤.
+echo   ¾Æ·¡ Á¶°ÇÀ¸·Î ÀÚµ¿ ¿¹¸Å¸¦ ½ÃÀÛÇÕ´Ï´Ù.
 echo  --------------------------------------------
-echo     ê³„ì •      : !KORAIL_ID!
-echo     êµ¬ê°„      : !DEP!  -^>  !ARR!
-echo     ì¶œë°œì¼    : !DATE_!
-echo     ì‹œê°„ëŒ€    : !TIME_!  ~  !TIME_END!
-echo     ì—´ì°¨      : !TRAIN_TYPE!
-echo     ì¢Œì„      : !RESERVE_OPTION!
-echo     ì¸ì›      : ì–´ë¥¸ !ADULTS! / ì–´ë¦°ì´ !CHILDREN! / ê²½ë¡œ !SENIORS!
-if defined TRY_WAITING echo     ì˜ˆì•½ëŒ€ê¸°  : ON
-echo     ì¡°íšŒê°„ê²©  : !INTERVAL!ì´ˆ
+echo     °èÁ¤      : !KORAIL_ID!
+echo     ±¸°£      : !DEP!  -^>  !ARR!
+echo     Ãâ¹ßÀÏ    : !DATE_!
+echo     ½Ã°£´ë    : !TIME_!  ~  !TIME_END!
+echo     ¿­Â÷      : !TRAIN_TYPE!
+echo     ÁÂ¼®      : !RESERVE_OPTION!
+echo     ÀÎ¿ø      : ¾î¸¥ !ADULTS! / ¾î¸°ÀÌ !CHILDREN! / °æ·Î !SENIORS!
+if defined TRY_WAITING echo     ¿¹¾à´ë±â  : ON
+echo     Á¶È¸°£°Ý  : !INTERVAL!ÃÊ
 echo  --------------------------------------------
 echo.
-echo   * ì¢Œì„ì´ í’€ë¦¬ëŠ” ì¦‰ì‹œ ì˜ˆì•½í•˜ê³  ì¢…ë£Œí•©ë‹ˆë‹¤.
-echo   * ì¤‘ì§€í•˜ë ¤ë©´ Ctrl+Cë¥¼ ëˆ„ë¥´ì„¸ìš”.
-echo   * ì˜ˆì•½ ì„±ê³µ ì‹œ ì½”ë ˆì¼í†¡/í™ˆíŽ˜ì´ì§€ì—ì„œ ì‹œê°„ ë‚´ ê²°ì œí•˜ì„¸ìš”.
+echo   * ÁÂ¼®ÀÌ Ç®¸®´Â Áï½Ã ¿¹¾àÇÏ°í Á¾·áÇÕ´Ï´Ù.
+echo   * ÁßÁöÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.
+echo   * ¿¹¾à ¼º°ø ½Ã ÄÚ·¹ÀÏÅå/È¨ÆäÀÌÁö¿¡¼­ ½Ã°£ ³» °áÁ¦ÇÏ¼¼¿ä.
 echo.
-echo     [Y/Enter] ì‹œìž‘
-echo     [B]       ì´ì „ ë‹¨ê³„ ^(ì˜ˆë§¤ ì¡°ê±´^)ìœ¼ë¡œ
-echo     [Q]       ì¢…ë£Œ
-set /p START=     ì„ íƒ:
+echo     [Y/Enter] ½ÃÀÛ
+echo     [B]       ÀÌÀü ´Ü°è ^(¿¹¸Å Á¶°Ç^)À¸·Î
+echo     [Q]       Á¾·á
+set /p START=     ¼±ÅÃ:
 if "!START!"=="" set START=y
 if /i "!START!"=="q" goto END
 if /i "!START!"=="b" goto STEP3
@@ -255,7 +255,7 @@ python korail.py !ARGS!
 :END
 echo.
 echo  ============================================
-echo            ë§¤í¬ë¡œ ì¢…ë£Œ
+echo            ¸ÅÅ©·Î Á¾·á
 echo  ============================================
 pause
 endlocal
