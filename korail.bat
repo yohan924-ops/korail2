@@ -56,22 +56,27 @@ echo.
 echo   --- 로그인 확인 중... ---
 echo.
 python korail.py --id "!KORAIL_ID!" --pw "!KORAIL_PW!" --login-test
-if errorlevel 1 (
-    echo.
-    echo   [X] 로그인 실패. ID/PW를 다시 입력하세요.
-    echo.
-    pause
-    goto STEP1_RESET
+if errorlevel 1 goto STEP1_FAIL
+goto STEP1_SAVE
+
+:STEP1_FAIL
+echo.
+echo   [X] 로그인 실패. ID/PW를 다시 입력하세요.
+echo.
+pause
+goto STEP1_RESET
+
+:STEP1_SAVE
+if exist korail.config goto STEP1_DONE
+> korail.config (
+    echo KORAIL_ID=!KORAIL_ID!
+    echo KORAIL_PW=!KORAIL_PW!
 )
-if not exist korail.config (
-    > korail.config (
-        echo KORAIL_ID=!KORAIL_ID!
-        echo KORAIL_PW=!KORAIL_PW!
-    )
-    attrib +h korail.config
-    echo.
-    echo   [O] 계정 정보 저장 완료.
-)
+attrib +h korail.config
+echo.
+echo   [O] 계정 정보 저장 완료.
+
+:STEP1_DONE
 echo.
 echo   [O] 로그인 성공! 다음 단계로 이동합니다.
 echo.
