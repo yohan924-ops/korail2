@@ -16,43 +16,49 @@ echo             [ 1 / 4 ]   로그인
 echo  ============================================
 echo.
 
-if exist korail.config (
-    for /f "usebackq tokens=1,* delims==" %%a in ("korail.config") do set "%%a=%%b"
-    echo   저장된 계정으로 로그인합니다.
-    echo     ID : !KORAIL_ID!
-    echo.
-    echo     [Enter] 그대로 진행
-    echo     [N]     계정 변경
-    echo     [Q]     종료
-    set /p RELOGIN=     선택:
-    if /i "!RELOGIN!"=="q" goto END
-    if /i "!RELOGIN!"=="n" (
-        del korail.config
-        goto STEP1
-    )
-) else (
-    echo   처음 실행입니다. 코레일 계정을 입력하세요.
-    echo   ^(이 폴더의 korail.config에 저장됩니다^)
-    echo.
-    set /p KORAIL_ID=     ID  ^(회원번호/이메일/010-XXXX-XXXX^):
-    set /p KORAIL_PW=     비밀번호:
-    echo.
-    echo     [Enter] 이 정보로 진행
-    echo     [B]     다시 입력
-    echo     [Q]     종료
-    set /p CONFIRM1=     선택:
-    if /i "!CONFIRM1!"=="q" goto END
-    if /i "!CONFIRM1!"=="b" goto STEP1
-    > korail.config (
-        echo KORAIL_ID=!KORAIL_ID!
-        echo KORAIL_PW=!KORAIL_PW!
-    )
-    attrib +h korail.config
-    echo.
-    echo   [O] 계정 정보 저장 완료.
-    echo.
-    pause
+if not exist korail.config goto STEP1_NEW
+
+for /f "usebackq tokens=1,* delims==" %%a in ("korail.config") do set "%%a=%%b"
+echo   저장된 계정으로 로그인합니다.
+echo     ID : !KORAIL_ID!
+echo.
+echo     [Enter] 그대로 진행
+echo     [N]     계정 변경
+echo     [Q]     종료
+set /p RELOGIN=     선택:
+if /i "!RELOGIN!"=="q" goto END
+if /i "!RELOGIN!"=="n" goto STEP1_RESET
+goto STEP2
+
+:STEP1_RESET
+attrib -h korail.config 2>nul
+del /f /q korail.config 2>nul
+set "KORAIL_ID="
+set "KORAIL_PW="
+goto STEP1
+
+:STEP1_NEW
+echo   처음 실행입니다. 코레일 계정을 입력하세요.
+echo   ^(이 폴더의 korail.config에 저장됩니다^)
+echo.
+set /p KORAIL_ID=     ID  ^(회원번호/이메일/010-XXXX-XXXX^):
+set /p KORAIL_PW=     비밀번호:
+echo.
+echo     [Enter] 이 정보로 진행
+echo     [B]     다시 입력
+echo     [Q]     종료
+set /p CONFIRM1=     선택:
+if /i "!CONFIRM1!"=="q" goto END
+if /i "!CONFIRM1!"=="b" goto STEP1_RESET
+> korail.config (
+    echo KORAIL_ID=!KORAIL_ID!
+    echo KORAIL_PW=!KORAIL_PW!
 )
+attrib +h korail.config
+echo.
+echo   [O] 계정 정보 저장 완료.
+echo.
+pause
 
 
 REM ============================================================
