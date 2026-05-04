@@ -15,41 +15,20 @@ echo  ============================================
 echo             [ 1 / 4 ]   로그인
 echo  ============================================
 echo.
-
-if not exist korail.config goto STEP1_NEW
-
-for /f "usebackq tokens=1,* delims==" %%a in ("korail.config") do set "%%a=%%b"
-echo   저장된 계정으로 로그인합니다.
-echo     ID : !KORAIL_ID!
+echo   코레일 계정을 입력하세요.
+echo   ^(보안을 위해 자동 저장하지 않습니다. 매 실행마다 입력 필요^)
 echo.
-echo     [Enter] 그대로 진행
-echo     [N]     계정 변경
-echo     [Q]     종료
-set /p RELOGIN=     선택:
-if /i "!RELOGIN!"=="q" goto END
-if /i "!RELOGIN!"=="n" goto STEP1_RESET
-goto STEP1_VERIFY
-
-:STEP1_RESET
-attrib -h korail.config 2>nul
-del /f /q korail.config 2>nul
 set "KORAIL_ID="
 set "KORAIL_PW="
-goto STEP1
-
-:STEP1_NEW
-echo   처음 실행입니다. 코레일 계정을 입력하세요.
-echo   ^(이 폴더의 korail.config에 저장됩니다^)
-echo.
 set /p KORAIL_ID=     ID  ^(회원번호/이메일/010-XXXX-XXXX^):
 set /p KORAIL_PW=     비밀번호:
 echo.
-echo     [Enter] 이 정보로 진행
+echo     [Enter] 이 정보로 로그인
 echo     [B]     다시 입력
 echo     [Q]     종료
 set /p CONFIRM1=     선택:
 if /i "!CONFIRM1!"=="q" goto END
-if /i "!CONFIRM1!"=="b" goto STEP1_RESET
+if /i "!CONFIRM1!"=="b" goto STEP1
 
 :STEP1_VERIFY
 echo.
@@ -57,24 +36,14 @@ echo   --- 로그인 확인 중... ---
 echo.
 python korail.py --id "!KORAIL_ID!" --pw "!KORAIL_PW!" --login-test
 if errorlevel 1 goto STEP1_FAIL
-goto STEP1_SAVE
+goto STEP1_DONE
 
 :STEP1_FAIL
 echo.
 echo   [X] 로그인 실패. ID/PW를 다시 입력하세요.
 echo.
 pause
-goto STEP1_RESET
-
-:STEP1_SAVE
-if exist korail.config goto STEP1_DONE
-> korail.config (
-    echo KORAIL_ID=!KORAIL_ID!
-    echo KORAIL_PW=!KORAIL_PW!
-)
-attrib +h korail.config
-echo.
-echo   [O] 계정 정보 저장 완료.
+goto STEP1
 
 :STEP1_DONE
 echo.
