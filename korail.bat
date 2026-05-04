@@ -21,8 +21,11 @@ if exist korail.config (
     echo   저장된 계정으로 로그인합니다.
     echo     ID : !KORAIL_ID!
     echo.
-    echo   ^(계정 변경하려면 N 입력, 그대로 진행은 Enter^)
-    set /p RELOGIN=     선택 [Enter]:
+    echo     [Enter] 그대로 진행
+    echo     [N]     계정 변경
+    echo     [Q]     종료
+    set /p RELOGIN=     선택:
+    if /i "!RELOGIN!"=="q" goto END
     if /i "!RELOGIN!"=="n" (
         del korail.config
         goto STEP1
@@ -33,6 +36,13 @@ if exist korail.config (
     echo.
     set /p KORAIL_ID=     ID  ^(회원번호/이메일/010-XXXX-XXXX^):
     set /p KORAIL_PW=     비밀번호:
+    echo.
+    echo     [Enter] 이 정보로 진행
+    echo     [B]     다시 입력
+    echo     [Q]     종료
+    set /p CONFIRM1=     선택:
+    if /i "!CONFIRM1!"=="q" goto END
+    if /i "!CONFIRM1!"=="b" goto STEP1
     > korail.config (
         echo KORAIL_ID=!KORAIL_ID!
         echo KORAIL_PW=!KORAIL_PW!
@@ -40,9 +50,9 @@ if exist korail.config (
     attrib +h korail.config
     echo.
     echo   [O] 계정 정보 저장 완료.
+    echo.
+    pause
 )
-echo.
-pause
 
 
 REM ============================================================
@@ -89,15 +99,16 @@ python korail.py !SEARCH_ARGS!
 
 echo.
 echo  --------------------------------------------
-echo   이 결과로 진행할까요?
-echo     Y = 예약 조건 설정으로 이동
-echo     R = 검색 조건 다시 입력
-echo     Q = 종료
+echo     [Y/Enter] 예매 조건 설정으로
+echo     [R]       검색 조건 다시 입력
+echo     [B]       이전 단계 ^(로그인^)으로
+echo     [Q]       종료
 echo  --------------------------------------------
-set /p NEXT=     선택 [Y]:
+set /p NEXT=     선택:
 if "!NEXT!"=="" set NEXT=y
-if /i "!NEXT!"=="r" goto STEP2
 if /i "!NEXT!"=="q" goto END
+if /i "!NEXT!"=="b" goto STEP1
+if /i "!NEXT!"=="r" goto STEP2
 
 
 REM ============================================================
@@ -144,6 +155,19 @@ echo.
 set /p INTERVAL=     조회 간격(초^) [3]:
 if "!INTERVAL!"=="" set INTERVAL=3
 
+echo.
+echo  --------------------------------------------
+echo     [Y/Enter] 다음 ^(예매 시작 화면^)으로
+echo     [B]       이전 단계 ^(기차 검색^)으로
+echo     [R]       이 단계 다시 입력
+echo     [Q]       종료
+echo  --------------------------------------------
+set /p NEXT3=     선택:
+if "!NEXT3!"=="" set NEXT3=y
+if /i "!NEXT3!"=="q" goto END
+if /i "!NEXT3!"=="b" goto STEP2
+if /i "!NEXT3!"=="r" goto STEP3
+
 
 REM ============================================================
 REM   4단계: 예매 시작
@@ -170,9 +194,15 @@ echo  --------------------------------------------
 echo.
 echo   * 좌석이 풀리는 즉시 예약하고 종료합니다.
 echo   * 중지하려면 Ctrl+C를 누르세요.
-echo   * 예약 성공 시 코레일톡 또는 홈페이지에서 시간 내 결제하세요.
+echo   * 예약 성공 시 코레일톡/홈페이지에서 시간 내 결제하세요.
 echo.
-pause
+echo     [Y/Enter] 시작
+echo     [B]       이전 단계 ^(예매 조건^)으로
+echo     [Q]       종료
+set /p START=     선택:
+if "!START!"=="" set START=y
+if /i "!START!"=="q" goto END
+if /i "!START!"=="b" goto STEP3
 
 cls
 set ARGS=--id "!KORAIL_ID!" --pw "!KORAIL_PW!" --dep !DEP! --arr !ARR! --date !DATE_! --time !TIME_! --train-type !TRAIN_TYPE! --reserve-option !RESERVE_OPTION! --adults !ADULTS! --children !CHILDREN! --seniors !SENIORS! --interval !INTERVAL!
