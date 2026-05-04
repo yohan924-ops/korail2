@@ -93,11 +93,13 @@ def build_passengers(adults, children, seniors):
 
 
 def filter_candidates(trains, args, reserve_option, train_no_filter):
-    out = trains
+    """반환: (예약가능 후보, 윈도우 내 개수, 윈도우 외 개수)."""
+    in_window = trains
     if args.time_end:
-        out = [t for t in out if t.dep_time <= args.time_end]
+        in_window = [t for t in in_window if t.dep_time <= args.time_end]
     if train_no_filter:
-        out = [t for t in out if t.train_no in train_no_filter]
+        in_window = [t for t in in_window if t.train_no in train_no_filter]
+    out_of_window = len(trains) - len(in_window)
 
     def usable(t):
         if reserve_option == ReserveOption.GENERAL_ONLY:
@@ -110,7 +112,7 @@ def filter_candidates(trains, args, reserve_option, train_no_filter):
             ok = t.has_general_waiting_list()
         return ok
 
-    return [t for t in out if usable(t)]
+    return [t for t in in_window if usable(t)], len(in_window), out_of_window
 
 
 def main():
@@ -188,9 +190,15 @@ def main():
             time.sleep(args.interval)
             continue
 
-        candidates = filter_candidates(trains, args, reserve_option, train_no_filter)
+        candidates, in_window, out_of_window = filter_candidates(
+            trains, args, reserve_option, train_no_filter)
         if not candidates:
-            log(f"#{attempt} 조건 일치 열차 없음 (검색 {len(trains)}건)")
+            if in_window == 0:
+                log(f"#{attempt} 윈도우 내 빈자리 없음"
+                    f" (윈도우 밖 {out_of_window}건은 발매중)")
+            else:
+                log(f"#{attempt} 윈도우 내 {in_window}건 모두 매진/대기없음"
+                    f" (윈도우 밖 {out_of_window}건 발매중)")
             time.sleep(args.interval)
             continue
 
