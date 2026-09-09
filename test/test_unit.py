@@ -205,3 +205,58 @@ class TestEncPassword(TestCase):
         self.assertIsInstance(enc, str)
         self.assertTrue(enc)
         self.assertEqual(korail._idx, '7')
+
+
+class TestLoginIdFormat(TestCase):
+    """아이디 형식에 따른 txtInputFlg 분류와 전화번호 정규화."""
+
+    def _flg_and_id(self, korail_id):
+        """login() 이 서버로 보낼 txtInputFlg 와 txtMemberNo 를 얻는다."""
+        korail = Korail(korail_id, 'pw', auto_login=False)
+        sent = {}
+
+        class FakeResponse(object):
+            text = '{"strResult": "FAIL", "h_msg_cd": "X", "h_msg_txt": "nope"}'
+
+        def post(url, data=None, **kwargs):
+            sent.update(data or {})
+            return FakeResponse()
+
+        korail._session = mock.Mock()
+        korail._session.post.side_effect = post
+        with mock.patch.object(Korail, '_Korail__enc_password',
+                               return_value='enc'):
+            korail.login()
+        return sent['txtInputFlg'], sent['txtMemberNo'], korail
+
+    def test_email(self):
+        flg, member_no, _ = self._flg_and_id('carpedm20@gmail.com')
+        self.assertEqual(flg, '5')
+        self.assertEqual(member_no, 'carpedm20@gmail.com')
+
+    def test_membership_number(self):
+        flg, member_no, _ = self._flg_and_id('12345678')
+        self.assertEqual(flg, '2')
+        self.assertEqual(member_no, '12345678')
+
+    def test_phone_with_hyphens(self):
+        flg, member_no, _ = self._flg_and_id('010-1234-5678')
+        self.assertEqual(flg, '4')
+        self.assertEqual(member_no, '010-1234-5678')
+
+    def test_phone_without_hyphens_is_not_mistaken_for_membership(self):
+        # 하이픈 없이 넣어도 전화번호로 인식되어야 한다.
+        flg, member_no, _ = self._flg_and_id('01012345678')
+        self.assertEqual(flg, '4')
+        self.assertEqual(member_no, '010-1234-5678')
+
+    def test_old_style_phone_without_hyphens(self):
+        flg, member_no, _ = self._flg_and_id('0111234567')
+        self.assertEqual(flg, '4')
+        self.assertEqual(member_no, '011-123-4567')
+
+    def test_failure_reason_is_kept(self):
+        _, _, korail = self._flg_and_id('12345678')
+        self.assertFalse(korail.logined)
+        self.assertEqual(korail.last_error_code, 'X')
+        self.assertEqual(korail.last_error_message, 'nope')
