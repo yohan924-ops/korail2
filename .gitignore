@@ -18,3 +18,10 @@ develop-eggs
 
 test/korail_idpw.txt
 .idea
+
+# Sphinx build output
+docs/_build
+
+# Credentials - never commit these
+.env
+*.pem

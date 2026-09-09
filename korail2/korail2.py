@@ -9,13 +9,10 @@
 import re
 import requests
 import itertools
-import sys
 import base64
 
-from datetime import datetime, timedelta
-from six import with_metaclass
-from pprint import pprint
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
+from functools import reduce
 from Crypto.Util.Padding import pad
 from Crypto.Cipher import AES
 
@@ -25,15 +22,15 @@ try:
 except ImportError:
     import json
 
-
-def _python3():
-    return sys.version_info > (3, 0)
-
-if _python3():
-    from functools import reduce
-
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
-PHONE_NUMBER_REGEX = re.compile(r"(\d{3})-(\d{3,4})-(\d{4})")
+#: 휴대폰 번호. 하이픈이 있어도 없어도 인식한다.
+#: 코레일 웹 로그인 폼은 하이픈 없이 입력받지만, 이 모바일 API 가
+#: txtMemberNo 에 어느 형식을 기대하는지는 확인되지 않았다. upstream 부터
+#: 하이픈 형식을 보내왔으므로 그 형식으로 정규화한다.
+PHONE_NUMBER_REGEX = re.compile(r"^(\d{3})-?(\d{3,4})-?(\d{4})$")
+
+#: 코레일 API 는 한국시간(UTC+9) 기준으로 동작한다.
+KST = timezone(timedelta(hours=9))
 
 SCHEME = "https"
 KORAIL_HOST = "smart.letskorail.com"
@@ -65,15 +62,12 @@ DEFAULT_USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 5.1.1; Nexus 4 Build/LMY48
 
 
 def _get_utf8(data, key, default=None):
-    v = data.get(key, default)
+    """응답 dict 에서 값을 꺼낸다.
 
-    if _python3():
-        return v
-
-    if isinstance(v, basestring):
-        return v.encode('utf-8')
-    else:
-        return v
+    Python 2 에서는 str 로 인코딩해주던 함수였으나, 이제 Python 3 전용이라
+    ``dict.get`` 과 동작이 같다. 호출부가 많아 이름은 그대로 유지한다.
+    """
+    return data.get(key, default)
 
 class Schedule(object):
     """Korail train object. Highly inspired by `korail.py
@@ -395,16 +389,26 @@ class SeniorPassenger(Passenger):
 
 
 class TrainType:
+    """열차 종별 코드 (`selGoTrain` / `txtTrnGpCd`).
+
+    코레일이 같은 그룹으로 묶는 종별끼리는 값이 겹친다.
+    KTX/KTX-산천은 "100", 새마을호/ITX-새마을은 "101" 로 동일하다.
+    무궁화호와 누리로가 같은 "102" 인 것은 upstream 부터 이어져 온 값으로,
+    실제 코레일 서버에서 구분되는지는 확인되지 않았다.
+    """
     KTX = "100"  # "KTX, KTX-산천",
     SAEMAEUL = "101"  # "새마을호",
     MUGUNGHWA = "102"  # "무궁화호",
-    TONGGUEN = "103"  # "통근열차",
+    TONGGEUN = "103"  # "통근열차",
     NURIRO = "102"  # "누리로",
     ALL = "109"  # "전체",
     AIRPORT = "105"  # "공항직통",
     KTX_SANCHEON = "100"  # "KTX-산천",
     ITX_SAEMAEUL = "101"  # "ITX-새마을",
     ITX_CHEONGCHUN = "104"  # "ITX-청춘",
+
+    #: 오타로 배포된 이전 이름. 기존 코드 호환을 위해 남겨둔다.
+    TONGGUEN = TONGGEUN
 
     def __init__(self):
         raise NotImplementedError("Do not make instance.")
@@ -500,7 +504,7 @@ class ExceptionForm(type):
         return item in cls.codes
 
 
-class KorailError(with_metaclass(ExceptionForm, Exception)):
+class KorailError(Exception, metaclass=ExceptionForm):
     """Korail Base Error Class"""
 
     def __init__(self, msg, code):
@@ -541,10 +545,17 @@ class SoldOutError(KorailError):
 # noinspection PyUnresolvedReferences,PyRedeclaration
 class Korail(object):
     """Korail object"""
-    _session = requests.session()
 
     _device = 'AD'
+
+    #: 로그인 이후의 일반 요청에 실어 보내는 앱 버전.
     _version = '190617001'
+
+    #: 로그인 요청에만 쓰는 앱 버전. 코레일 로그인 엔드포인트가 위의 값을
+    #: 거부해서 별도로 유지한다. 두 값을 통일해도 되는지는 확인되지 않았으므로
+    #: 실제 서버 응답을 확인하기 전에는 합치지 말 것.
+    _login_version = '231231001'
+
     _key = 'korail1234567890'
 
     _idx = None
@@ -553,7 +564,15 @@ class Korail(object):
     name = None
     email = None
 
+    #: 마지막 로그인 실패의 서버 응답. login() 이 False 를 돌려줬을 때 참고한다.
+    last_error_code = None
+    last_error_message = None
+
     def __init__(self, korail_id, korail_pw, auto_login=True, want_feedback=False):
+        # 세션(=쿠키 저장소)은 인스턴스마다 따로 가져야 한다. 클래스 속성으로
+        # 두면 여러 계정을 동시에 다룰 때 나중에 로그인한 쪽이 앞의 세션을
+        # 덮어쓴다.
+        self._session = requests.session()
         self._session.headers.update({'User-Agent': DEFAULT_USER_AGENT})
         self.korail_id = korail_id
         self.korail_pw = korail_pw
@@ -583,7 +602,10 @@ class Korail(object):
 
             return base64.b64encode(base64.b64encode(cipher.encrypt(padded_data))).decode("utf-8")
         else:
-            return False
+            # 예전에는 False 를 돌려주고 login() 이 그대로 txtPwd 에 실어
+            # 보냈다. 원인을 알 수 없는 로그인 실패가 되므로 여기서 끊는다.
+            raise KorailError("Failed to fetch password encryption key",
+                              _get_utf8(j, 'strResult'))
 
 
     def login(self, korail_id=None, korail_pw=None):
@@ -624,18 +646,20 @@ When you want change ID using existing object,
         else:
             self.korail_pw = korail_pw
 
+        phone_match = PHONE_NUMBER_REGEX.match(korail_id)
         if EMAIL_REGEX.match(korail_id):
             txt_input_flg = '5'
-        elif PHONE_NUMBER_REGEX.match(korail_id):
+        elif phone_match:
             txt_input_flg = '4'
+            # 하이픈 없이 입력해도 같은 형식으로 맞춰 보낸다.
+            korail_id = "%s-%s-%s" % phone_match.groups()
         else:
             txt_input_flg = '2'
 
         url = KORAIL_LOGIN
         data = {
             'Device': self._device,
-            'Version': '231231001', # HACK
-            #'Version': self._version,
+            'Version': self._login_version,
             # 2 : for membership number,
             # 4 : for phone number,
             # 5 : for email,
@@ -657,6 +681,9 @@ When you want change ID using existing object,
             return True
         else:
             self.logined = False
+            # 실패 사유를 버리면 원인을 알 수 없다. 호출부가 읽을 수 있게 남긴다.
+            self.last_error_code = _get_utf8(j, 'h_msg_cd')
+            self.last_error_message = _get_utf8(j, 'h_msg_txt')
             return False
 
     def logout(self):
@@ -683,14 +710,21 @@ When you want change ID using existing object,
             return True
 
     def search_train_allday(self, dep, arr, date=None, time=None, train_type=TrainType.ALL,
-                            passengers=None, include_no_seats=False):
-        """Search all trains for specific time and date."""
+                            passengers=None, include_no_seats=False, include_waiting_list=False):
+        """Search all trains for specific time and date.
+
+        `search_train` 을 시각을 밀어가며 반복 호출한다. 인자는 `search_train`
+        과 같다.
+        """
         min1 = timedelta(minutes=1)
         all_trains = []
         dep_time = time
         for i in range(15):  # 최대 15번 호출
             try:
-                trains = self.search_train(dep, arr, date, dep_time, train_type, passengers, True)
+                # 페이징을 위해 일단 매진 열차까지 모두 받아온 뒤,
+                # 마지막에 한 번만 필터링한다.
+                trains = self.search_train(dep, arr, date, dep_time, train_type,
+                                           passengers, include_no_seats=True)
                 all_trains.extend(trains)
                 # 만약 마지막 승차권의 출발시각이 23시 59분인 경우, 검색 중지. (다음 날 승차권 검색 방지)
                 last_dep_time = datetime.strptime(all_trains[-1].dep_time, "%H%M%S")
@@ -703,7 +737,11 @@ When you want change ID using existing object,
                 break
 
         if not include_no_seats:
-            all_trains = list(filter(lambda x: x.has_seat(), all_trains))
+            if include_waiting_list:
+                all_trains = list(filter(lambda x: x.has_seat() or x.has_waiting_list(),
+                                         all_trains))
+            else:
+                all_trains = list(filter(lambda x: x.has_seat(), all_trains))
 
         if len(all_trains) == 0:
             raise NoResultsError()
@@ -718,17 +756,14 @@ When you want change ID using existing object,
 :param arr: A arrival station in Korean  ex) '부산'
 :param date: (optional) A departure date in `yyyyMMdd` format
 :param time: (optional) A departure time in `hhmmss` format
-:param train_type: (optional) A type of train
-                   - 00: KTX, KTX-산천
-                   - 01: 새마을호
-                   - 02: 무궁화호
-                   - 03: 통근열차
-                   - 04: 누리로
-                   - 05: 전체 (기본값)
-                   - 06: 공학직통
-                   - 07: KTX-산천
-                   - 08: ITX-새마을
-                   - 09: ITX-청춘
+:param train_type: (optional) A type of train. Use `TrainType` constants.
+                   - 100: TrainType.KTX / TrainType.KTX_SANCHEON
+                   - 101: TrainType.SAEMAEUL / TrainType.ITX_SAEMAEUL
+                   - 102: TrainType.MUGUNGHWA / TrainType.NURIRO
+                   - 103: TrainType.TONGGEUN
+                   - 104: TrainType.ITX_CHEONGCHUN
+                   - 105: TrainType.AIRPORT
+                   - 109: TrainType.ALL (기본값)
 :param passengers=None: (optional) List of Passenger Objects. None means 1 AdultPassenger.
 :param include_no_seats=False: (optional) When True, a result includes trains which has no seats.
 :param include_waiting_list=False: (optional) When False, a result includes trains which has no seats but can make a wait reservation(예약 대기)'
@@ -794,7 +829,7 @@ There are 4 types of Passengers now, AdultPassenger, ChildPassenger, ToddlerPass
 
 """
         # 코레일에 열차 티켓 리스트 API 요청시 한국시간을 기준으로 함.
-        kst_now = datetime.utcnow() + timedelta(hours=9)
+        kst_now = datetime.now(KST)
         if date is None:
             date = kst_now.strftime("%Y%m%d")
         if time is None:
@@ -922,8 +957,6 @@ When the train allows waiting, enroll for the waiting list instead of failing in
 
         if passengers is None:
             passengers = [AdultPassenger()]
-
-        print(train)
 
         passengers = Passenger.reduce(passengers)
         cnt = reduce(lambda x,y: x + y.count, passengers, 0)

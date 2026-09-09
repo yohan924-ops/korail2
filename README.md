@@ -10,7 +10,7 @@ Legal disclaimer
 Korail2
 =======
 
-[![Build Status](https://travis-ci.org/sng2c/korail2.svg?branch=master)](https://travis-ci.org/sng2c/korail2)
+![test](https://github.com/yohan924-ops/korail2/actions/workflows/test.yml/badge.svg)
 
 Korail (www.letskorail.com) wrapper for Python.
 
@@ -22,6 +22,11 @@ Documentation
 
 The documentation is available at [here](http://carpedm20.github.io/korail2/)
 
+
+Requirements
+------------
+
+Python 3.8+ (`requests`, `PyCryptodome`).
 
 Installing
 ----------
@@ -40,6 +45,24 @@ Or, you can also install manually:
     $ cd korail2
     $ python setup.py install
 
+Credentials
+-----------
+
+**Never hardcode your Korail ID/password in source files.** Read them from
+the environment (or a secret manager) instead:
+
+```python
+import os
+from korail2 import Korail
+
+korail = Korail(os.environ['KORAIL_ID'], os.environ['KORAIL_PW'])
+```
+
+The example script `korail.py` and the integration tests both take
+`KORAIL_ID` / `KORAIL_PW` from the environment for this reason.
+Also note that enabling HTTP debug logging dumps the encrypted password and
+session cookies into your logs, so keep it off unless you need it.
+
 Using
 -----
 
@@ -52,6 +75,7 @@ First, you need to create a Korail object.
 >>> korail = Korail("12345678", YOUR_PASSWORD) # with membership number
 >>> korail = Korail("carpedm20@gmail.com", YOUR_PASSWORD) # with email
 >>> korail = Korail("010-9964-xxxx", YOUR_PASSWORD) # with phone number
+>>> korail = Korail("0109964xxxx", YOUR_PASSWORD)   # hyphens optional
 ```
 
 If you do not want login automatically, 
@@ -85,18 +109,21 @@ You can search train schedules `search_train` and `search_train_allday` methods.
 - time : (optional) A departure time in `hhmmss` format
 - train_type: (optional) A type of train. You can use constants of TrainType class here.
     default value is TrainType.ALL.
-    - 00: TrainType.KTX - KTX 
-    - 01: TrainType.SAEMAEUL - 새마을호     
-    - 02: TrainType.MUGUNGHWA - 무궁화호
-    - 03: TrainType.TONGGEUN - 통근열차
-    - 04: TrainType.NURIRO - 누리로
-    - 05: TrainType.ALL - 전체 
-    - 06: TrainType.AIRPORT - 공항직통
-    - 07: TrainType.KTX_SANCHEON - KTX-산천
-    - 08: TrainType.ITX_SAEMAEUL - ITX-새마을 
-    - 09: TrainType.ITX_CHEONGCHUN - ITX-청춘
+    코레일이 같은 그룹으로 묶는 종별끼리는 코드값이 겹칩니다.
+    - 100: TrainType.KTX - KTX
+    - 100: TrainType.KTX_SANCHEON - KTX-산천
+    - 101: TrainType.SAEMAEUL - 새마을호
+    - 101: TrainType.ITX_SAEMAEUL - ITX-새마을
+    - 102: TrainType.MUGUNGHWA - 무궁화호
+    - 102: TrainType.NURIRO - 누리로
+    - 103: TrainType.TONGGEUN - 통근열차
+    - 104: TrainType.ITX_CHEONGCHUN - ITX-청춘
+    - 105: TrainType.AIRPORT - 공항직통
+    - 109: TrainType.ALL - 전체
 - (optional) passengers=None : List of Passenger Objects. None means 1 AdultPassenger.
 - (optional) include_no_seats=False : When True, a result includes trains which has no seats.
+- (optional) include_waiting_list=False : When True, a result also includes sold-out trains
+  which still accept a waiting-list reservation (예약 대기).
 
 Below is a sample usage of `search_train`:
 
@@ -136,7 +163,8 @@ When you want to see sold-out trains.
 
 `passengers` is a list(or tuple) of Passeger Objects.
 By this, you can search for multiple passengers.
-There are 3 types of Passengers now, AdultPassenger, ChildPassenger and SeniorPassenger.
+There are 4 types of Passengers now, AdultPassenger, ChildPassenger,
+ToddlerPassenger and SeniorPassenger.
 
 ```python
 # for 1 adult, 1 child
@@ -149,6 +177,9 @@ There are 3 types of Passengers now, AdultPassenger, ChildPassenger and SeniorPa
 
 # for 2 adults, 1 child, 1 senior
 >>> psgrs = [AdultPassenger(2), ChildPassenger(), SeniorPassenger()]
+
+# for 1 adult, 1 toddler (유아)
+>>> psgrs = [AdultPassenger(), ToddlerPassenger()]
 
 # for 1 adult, It supports negative count or zero count. 
 # But it uses passengers which the sum is greater than zero.
@@ -197,6 +228,14 @@ There are 4 options in ReserveOption class.
 
 ```python
 >>> korail.reserve(trains[0], psgrs, ReserveOption.GENERAL_ONLY)
+```
+
+If the train is sold out but still accepts a waiting-list reservation (예약 대기),
+pass `try_waiting=True` to enroll in the waiting list instead of raising `SoldOutError`.
+
+```python
+>>> trains = korail.search_train(dep, arr, date, time, include_waiting_list=True)
+>>> korail.reserve(trains[0], psgrs, try_waiting=True)
 ```
 
 ### 4. Show reservations ####
