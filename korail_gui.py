@@ -10,13 +10,14 @@ import os
 import queue
 import threading
 import tkinter as tk
-from datetime import datetime, timedelta
+from datetime import datetime
 from tkinter import messagebox, ttk
 
 from korail2 import (AdultPassenger, ChildPassenger, Korail, KorailError,
                      NeedToLoginError, NoResultsError, ReserveOption,
                      SeniorPassenger, SoldOutError, ToddlerPassenger,
                      TrainType)
+from korail2.korail2 import KST
 
 APP_TITLE = "korail2 승차권 조회·예약"
 
@@ -43,7 +44,7 @@ MIN_POLL_INTERVAL = 10  # 초. 코레일이 자동화를 차단하므로 더 짧
 
 def kst_now():
     """코레일 API 는 한국시간 기준이다."""
-    return datetime.utcnow() + timedelta(hours=9)
+    return datetime.now(KST)
 
 
 def fmt_time(hhmmss):
