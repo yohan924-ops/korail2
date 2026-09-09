@@ -75,6 +75,7 @@ First, you need to create a Korail object.
 >>> korail = Korail("12345678", YOUR_PASSWORD) # with membership number
 >>> korail = Korail("carpedm20@gmail.com", YOUR_PASSWORD) # with email
 >>> korail = Korail("010-9964-xxxx", YOUR_PASSWORD) # with phone number
+>>> korail = Korail("0109964xxxx", YOUR_PASSWORD)   # hyphens optional
 ```
 
 If you do not want login automatically, 

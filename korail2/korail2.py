@@ -23,7 +23,11 @@ except ImportError:
     import json
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
-PHONE_NUMBER_REGEX = re.compile(r"(\d{3})-(\d{3,4})-(\d{4})")
+#: 휴대폰 번호. 하이픈이 있어도 없어도 인식한다.
+#: 코레일 웹 로그인 폼은 하이픈 없이 입력받지만, 이 모바일 API 가
+#: txtMemberNo 에 어느 형식을 기대하는지는 확인되지 않았다. upstream 부터
+#: 하이픈 형식을 보내왔으므로 그 형식으로 정규화한다.
+PHONE_NUMBER_REGEX = re.compile(r"^(\d{3})-?(\d{3,4})-?(\d{4})$")
 
 #: 코레일 API 는 한국시간(UTC+9) 기준으로 동작한다.
 KST = timezone(timedelta(hours=9))
@@ -560,6 +564,10 @@ class Korail(object):
     name = None
     email = None
 
+    #: 마지막 로그인 실패의 서버 응답. login() 이 False 를 돌려줬을 때 참고한다.
+    last_error_code = None
+    last_error_message = None
+
     def __init__(self, korail_id, korail_pw, auto_login=True, want_feedback=False):
         # 세션(=쿠키 저장소)은 인스턴스마다 따로 가져야 한다. 클래스 속성으로
         # 두면 여러 계정을 동시에 다룰 때 나중에 로그인한 쪽이 앞의 세션을
@@ -638,10 +646,13 @@ When you want change ID using existing object,
         else:
             self.korail_pw = korail_pw
 
+        phone_match = PHONE_NUMBER_REGEX.match(korail_id)
         if EMAIL_REGEX.match(korail_id):
             txt_input_flg = '5'
-        elif PHONE_NUMBER_REGEX.match(korail_id):
+        elif phone_match:
             txt_input_flg = '4'
+            # 하이픈 없이 입력해도 같은 형식으로 맞춰 보낸다.
+            korail_id = "%s-%s-%s" % phone_match.groups()
         else:
             txt_input_flg = '2'
 
@@ -670,6 +681,9 @@ When you want change ID using existing object,
             return True
         else:
             self.logined = False
+            # 실패 사유를 버리면 원인을 알 수 없다. 호출부가 읽을 수 있게 남긴다.
+            self.last_error_code = _get_utf8(j, 'h_msg_cd')
+            self.last_error_message = _get_utf8(j, 'h_msg_txt')
             return False
 
     def logout(self):
