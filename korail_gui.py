@@ -404,9 +404,15 @@ class KorailApp(tk.Tk):
                 self.on_load_reservations()
             else:
                 self.btn_login.configure(state="normal")
-                self.set_status("로그인 실패")
-                messagebox.showerror("로그인", "아이디 또는 비밀번호를 확인해주세요.",
-                                     parent=self)
+                # 서버가 준 사유를 그대로 보여준다. 감추면 원인을 알 수 없다.
+                detail = korail.last_error_message
+                code = korail.last_error_code
+                if detail:
+                    reason = "%s\n\n(%s)" % (detail, code)
+                else:
+                    reason = "아이디 또는 비밀번호를 확인해주세요."
+                self.set_status("로그인 실패: %s" % (detail or code or ""))
+                messagebox.showerror("로그인 실패", reason, parent=self)
 
         def failed(exc):
             self.var_pw.set("")
