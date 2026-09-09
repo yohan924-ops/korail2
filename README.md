@@ -63,6 +63,28 @@ The example script `korail.py` and the integration tests both take
 Also note that enabling HTTP debug logging dumps the encrypted password and
 session cookies into your logs, so keep it off unless you need it.
 
+Desktop app
+-----------
+
+A Tkinter GUI is included. It needs no extra packages beyond the library's own
+dependencies, and runs on Windows, macOS and Linux.
+
+```
+$ python korail_gui.py
+```
+
+- **조회 결과** — search trains and reserve the selected one.
+- **자동 좌석 대기** — poll for a sold-out train and reserve it when a seat opens.
+- **내 예약** — list and cancel your reservations.
+
+The password field is masked, is cleared once login succeeds, and is never
+written to disk or to the log.
+
+> Korail actively blocks automated access (`MACRO ERROR`). The polling interval
+> is therefore floored at 10 seconds, consecutive errors stop the loop, and
+> auto-reserve asks for confirmation before it starts. Aggressive polling risks
+> your account. Use it at your own responsibility.
+
 Using
 -----
 
