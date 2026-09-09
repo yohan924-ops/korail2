@@ -14,7 +14,7 @@
 import os
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from korail2 import (AdultPassenger, Korail, KorailError, NoResultsError,
                      TrainType)
@@ -27,7 +27,7 @@ PUSHOVER_APP_TOKEN = os.environ.get('PUSHOVER_APP_TOKEN')
 PUSHOVER_USER_TOKEN = os.environ.get('PUSHOVER_USER_TOKEN')
 
 # 코레일 API 는 한국시간 기준이므로 기본값도 KST 로 계산합니다.
-_KST_NOW = datetime.utcnow() + timedelta(hours=9)
+_KST_NOW = datetime.now(timezone(timedelta(hours=9)))
 
 DEP = os.environ.get('KORAIL_DEP', '서울')
 ARV = os.environ.get('KORAIL_ARR', '구포')

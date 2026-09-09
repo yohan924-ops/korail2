@@ -11,7 +11,7 @@ import requests
 import itertools
 import base64
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import reduce
 from Crypto.Util.Padding import pad
 from Crypto.Cipher import AES
@@ -24,6 +24,9 @@ except ImportError:
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
 PHONE_NUMBER_REGEX = re.compile(r"(\d{3})-(\d{3,4})-(\d{4})")
+
+#: 코레일 API 는 한국시간(UTC+9) 기준으로 동작한다.
+KST = timezone(timedelta(hours=9))
 
 SCHEME = "https"
 KORAIL_HOST = "smart.letskorail.com"
@@ -812,7 +815,7 @@ There are 4 types of Passengers now, AdultPassenger, ChildPassenger, ToddlerPass
 
 """
         # 코레일에 열차 티켓 리스트 API 요청시 한국시간을 기준으로 함.
-        kst_now = datetime.utcnow() + timedelta(hours=9)
+        kst_now = datetime.now(KST)
         if date is None:
             date = kst_now.strftime("%Y%m%d")
         if time is None:
